@@ -40,7 +40,6 @@ def train_batch(net, X, y, loss, trainer, devices):
     return train_loss_sum, train_acc_sum
 
 def train_epochs(net, train_iter, test_iter, loss, trainer, num_epochs, devices=d2l.try_all_gpus()):
-        
     timer, num_batches = d2l.Timer(), len(train_iter)
     animator = d2l.Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0, 1],
     legend=['train loss', 'train acc', 'test acc'])
@@ -53,39 +52,47 @@ def train_epochs(net, train_iter, test_iter, loss, trainer, num_epochs, devices=
             l, acc = train_batch(net, features, labels, loss, trainer, devices)
             metric.add(l, acc, labels.shape[0], labels.numel())
             timer.stop()
-            
             if (i + 1) % (num_batches // 5) == 0 or i == num_batches - 1:
                 print('batch: {0}, loss: {1}, accuracy: {2}'.format(i + 1, metric[0] / metric[2], metric[1] / metric[3]))
-                # animator.add(epoch + (i + 1) / num_batches, (metric[0] / metric[2], metric[1] / metric[3], None))
         test_acc = d2l.evaluate_accuracy_gpu(net, test_iter)
         print('epoch: {0}, test accuracy: {1}'.format(epoch + 1, test_acc))
-        # animator.add(epoch + 1, (None, None, test_acc))
+
             
     print(f'loss {metric[0] / metric[2]:.3f}, train acc ' f'{metric[1] / metric[3]:.3f}, test acc {test_acc:.3f}')
     print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec on ' f'{str(devices)}')
-
+    return net
 def predict_sentiment(net, sequence):
-    
     """Predict the sentiment of a text sequence."""
-    
-    # sequence = torch.tensor(vocab[sequence.split()], device=d2l.try_gpu())
+    sequence = sequence.to(next(net.parameters()).device)
     label = torch.argmax(net(sequence.reshape(1, -1)), dim=1)
-    
     return 'positive' if label == 1 else 'negative'
+def text_to_sequence(text, vocab, max_len):
+    tokens = tokenize(text) 
+    indices = [vocab[token] for token in tokens if token in vocab]
+    if len(indices) < max_len:
+        indices += [vocab['<pad>']] * (max_len - len(indices))  
+    else:
+        indices = indices[:max_len]  
+    return torch.tensor(indices, dtype=torch.long)
+def predict_text(net, text, vocab, max_len):
+    sequence = text_to_sequence(text, vocab, max_len)
+    return predict_sentiment(net, sequence)
 
 if __name__ == '__main__':
-    
     train_iter, test_iter, vocab = load_SA_data(data_dir+pos_file, data_dir+neg_file, batch_size, max_len)
     net = BiRNN(len(vocab), embed_size, num_hiddens, num_layers)
     trainer = torch.optim.Adam(net.parameters(), lr=lr)
     loss = nn.CrossEntropyLoss(reduction="none")
     net.apply(init_weights)
-    
-    train_epochs(net, train_iter, test_iter, loss, trainer, num_epoch, devices)
-    
+    trained_net = train_epochs(net, train_iter, test_iter, loss, trainer, num_epoch, devices)
+    torch.save(trained_net.state_dict(), 'sentiment_analysis_model.pth')
+    print("模型保存为 'sentiment_analysis_model.pth'")
     for i, (feat, label) in enumerate(test_iter):
         for i in range(len(feat)):
             one_sample = feat[i,:]
-            # print(one_sample.tolist())
-            print('sent: ', ''.join(vocab.to_tokens(one_sample.tolist())), 'label: ', 'pos' if label[i].tolist() == 1 else 'neg', 'predict: ', predict_sentiment(net, one_sample))
+            tokens = [token for token in vocab.to_tokens(one_sample.tolist()) if token != '<pad>']
+            print('sent: ', ''.join(tokens), 
+                  'label: ', 'pos' if label[i].tolist() == 1 else 'neg', 
+                  'predict: ', predict_sentiment(trained_net, one_sample))
         break
+    
