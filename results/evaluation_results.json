@@ -1,0 +1,23 @@
+[
+  {
+    "dataset": "heart.csv (\u8bca\u65ad)",
+    "accuracy": 0.8529411764705882,
+    "f1_macro": 0.8504277888344036,
+    "f1_weighted": 0.8524976374759674,
+    "samples": 918
+  },
+  {
+    "dataset": "Cleveland (\u8bca\u65ad+\u5f71\u50cf)",
+    "accuracy": 0.8185185185185185,
+    "f1_macro": 0.8137957241981112,
+    "f1_weighted": 0.8170906969797908,
+    "samples": 270
+  },
+  {
+    "dataset": "Framingham (\u98ce\u9669\u9884\u6d4b)",
+    "accuracy": 0.8481132075471698,
+    "f1_macro": 0.45890760592138846,
+    "f1_weighted": 0.7784112032515627,
+    "samples": 4240
+  }
+]
