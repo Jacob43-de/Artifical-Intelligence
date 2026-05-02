@@ -1,0 +1,67 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.rcParams['figure.dpi'] = 120
+plt.rcParams['font.size'] = 12
+plt.rcParams['axes.linewidth'] = 1.0
+colors_global = ['#a1caf1', '#46b3c7', '#003049', '#669bbc', '#f77f00', '#fcbf49']
+
+# 图 1：Risk Word Detection Rate Comparison
+plt.figure(figsize=(10,5))
+models1 = ['LR', 'RF', 'Vanilla BERT', 'Sup BERT', 'PPO BERT', 'Qwen-1.8B']
+values1 = [65.2, 68.9, 71.5, 82.1, 98.7, 99.1]
+bars1 = plt.bar(models1, values1, color=colors_global, edgecolor='black')
+
+for bar in bars1:
+    h = bar.get_height()
+    plt.text(bar.get_x()+bar.get_width()/2, h, f'{h}%', ha='center', va='bottom', fontweight='bold')
+
+plt.ylim(0, 110)
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.ylabel('Risk Word Detection Rate (%)')
+plt.title('Risk Word Detection Performance Comparison')
+plt.tight_layout()
+plt.savefig('risk_word_detection.png', dpi=300)
+plt.close()
+
+# 图 2：Guideline Compliance Score Comparison
+plt.figure(figsize=(8,5))
+groups = ['RLHF\n(BERT)', 'PPO-Guideline\n(BERT)', 'RLHF\n(Qwen)', 'PPO-Guideline\n(Qwen)']
+scores = [73.05, 74.38, 73.50, 75.41]
+bars2 = plt.bar(groups, scores, color=['#46b3c7','#669bbc','#f77f00','#fcbf49'], edgecolor='black')
+
+for bar in bars2:
+    h = bar.get_height()
+    plt.text(bar.get_x()+bar.get_width()/2, h, f'{h:.2f}%', ha='center', va='bottom', fontweight='bold')
+
+plt.ylim(70, 78)
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.ylabel('Guideline Compliance Score (%)')
+plt.title('Guideline Compliance Score Comparison')
+plt.tight_layout()
+plt.savefig('guideline_compliance.png', dpi=300)
+plt.close()
+
+# 图 3：MLM Accuracy Convergence Curve
+plt.figure(figsize=(9,5))
+epochs = [1,2,3,4,5]
+bert_curve = [68.2, 75.4, 79.5, 84.1, 89.2]
+qwen_curve = [72.3, 80.5, 85.1, 88.3, 90.5]
+
+plt.plot(epochs, bert_curve, marker='o', color='#003049', linewidth=2.5, markersize=7, label='BERT')
+plt.plot(epochs, qwen_curve, marker='s', color='#fcbf49', linewidth=2.5, markersize=7, label='Qwen-1.8B')
+
+for x, y in zip(epochs, bert_curve):
+    plt.text(x, y+1, f'{y}', ha='center', fontweight='bold')
+for x, y in zip(epochs, qwen_curve):
+    plt.text(x, y+1, f'{y}', ha='center', fontweight='bold')
+
+plt.ylim(65, 95)
+plt.grid(linestyle='--', alpha=0.6)
+plt.xlabel('Training Epoch')
+plt.ylabel('MLM Accuracy (%)')
+plt.title('MLM Accuracy Convergence Curve')
+plt.legend()
+plt.tight_layout()
+plt.savefig('mlm_convergence.png', dpi=300)
+plt.close()
